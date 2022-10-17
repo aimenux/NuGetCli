@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>NuGetCli-UserSecrets</UserSecretsId>
+		<Version>0.0.1-alpha</Version>
+		<Authors>Aymen TROUDI</Authors>
+		<PackAsTool>true</PackAsTool>
+		<PackageId>NuGetCli</PackageId>
+		<PackageOutputPath>../../nugets</PackageOutputPath>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<ToolCommandName>NuGetCli</ToolCommandName>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<Description>A net global tool helping to upload/download nuget packages</Description>
+		<PackageTags>dotnet, global tools, cli, nuget</PackageTags>
+		<RepositoryType>git</RepositoryType>
+		<PackageProjectUrl>https://github.com/aimenux/NuGetCli</PackageProjectUrl>
+		<RepositoryUrl>$(PackageProjectUrl)</RepositoryUrl>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.0.1" />
+		<PackageReference Include="McMaster.Extensions.Hosting.CommandLine" Version="4.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+		<PackageReference Include="NuGet.Protocol" Version="6.3.1" />
+		<PackageReference Include="Scrutor" Version="4.2.0" />
+		<PackageReference Include="Serilog.Extensions.Hosting" Version="5.0.1" />
+		<PackageReference Include="Serilog.Settings.Configuration" Version="3.4.0" />
+		<PackageReference Include="Serilog.Sinks.Console" Version="4.1.0" />
+		<PackageReference Include="Spectre.Console" Version="0.45.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="appsettings.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Commands" />
+	  <Folder Include="Extensions" />
+	</ItemGroup>
+
+</Project>
