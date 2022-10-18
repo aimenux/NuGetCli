@@ -15,7 +15,7 @@ public class UploadCommand : AbstractCommand
     }
 
     [Option("-u|--url", "Nuget feed url", CommandOptionType.SingleValue)]
-    public string NugetFeedUrl { get; set; }
+    public string NugetFeedUrl { get; set; } = Settings.DefaultNugetFeedUrl;
 
     [Option("-k|--key", "Nuget feed key", CommandOptionType.SingleValue)]
     public string NugetFeedKey { get; set; }
@@ -42,6 +42,6 @@ public class UploadCommand : AbstractCommand
     protected override bool HasValidOptions()
     {
         return Directory.Exists(WorkingDirectory)
-            && !string.IsNullOrWhiteSpace(NugetFeedUrl);
+               && !string.IsNullOrWhiteSpace(NugetFeedUrl);
     }
 }

@@ -14,6 +14,15 @@ public class DownloadCommand : AbstractCommand
         _nuGetService = nuGetService ?? throw new ArgumentNullException(nameof(nuGetService));
     }
 
+    [Option("-u|--url", "Nuget feed url", CommandOptionType.SingleValue)]
+    public string NugetFeedUrl { get; set; } = Settings.DefaultNugetFeedUrl;
+
+    [Option("--username", "Nuget feed username", CommandOptionType.SingleValue)]
+    public string NugetFeedUsername { get; set; }
+
+    [Option("--password", "Nuget feed password", CommandOptionType.SingleValue)]
+    public string NugetFeedPassword { get; set; }
+
     [Option("-n|--name", "Package name", CommandOptionType.SingleValue)]
     public string PackageName { get; set; }
 
@@ -30,6 +39,9 @@ public class DownloadCommand : AbstractCommand
     {
         var parameters = new NuGetParameters
         {
+            NugetFeedUrl = NugetFeedUrl,
+            NugetFeedUsername = NugetFeedUsername,
+            NugetFeedPassword = NugetFeedPassword,
             PackageName = PackageName,
             PackageVersion = PackageVersion,
             PackagesFile = PackagesFile,
@@ -47,9 +59,21 @@ public class DownloadCommand : AbstractCommand
     {
         if (!Directory.Exists(WorkingDirectory)) return false;
 
+        if (string.IsNullOrWhiteSpace(NugetFeedUrl)) return false;
+
         if (!string.IsNullOrWhiteSpace(PackagesFile))
         {
             return File.Exists(PackagesFile);
+        }
+
+        if (!string.IsNullOrWhiteSpace(NugetFeedUsername) && string.IsNullOrWhiteSpace(NugetFeedPassword))
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(NugetFeedUsername) && !string.IsNullOrWhiteSpace(NugetFeedPassword))
+        {
+            return false;
         }
 
         return !string.IsNullOrWhiteSpace(PackageName)

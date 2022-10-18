@@ -1,7 +1,7 @@
 using App.Extensions;
 using App.Services.Process;
-using Microsoft.Extensions.Options;
 using NuGet.Common;
+using NuGet.Configuration;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
@@ -13,18 +13,16 @@ public class NuGetService : INuGetService
     private const int ChunkSize = 50;
     private const int TimeoutInSeconds = 90;
     private readonly IProcessService _processService;
-    private readonly IOptions<Settings> _options;
 
-    public NuGetService(IProcessService processService, IOptions<Settings> options)
+    public NuGetService(IProcessService processService)
     {
         _processService = processService ?? throw new ArgumentNullException(nameof(processService));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
     public async Task<ICollection<NuGetPackage>> UploadNugetPackagesAsync(NuGetParameters parameters, CancellationToken cancellationToken)
     {
         var nugetPackagesFiles = GetNugetPackageFiles(parameters.WorkingDirectory);
-        
+
         var nugetPackages = new List<NuGetPackage>();
         foreach (var files in nugetPackagesFiles.Chunk(ChunkSize))
         {
@@ -81,7 +79,7 @@ public class NuGetService : INuGetService
         {
             return new NotFoundNuGetPackage(file, file, $"Failed to upload nuget package {file}: Size is 0KB");
         }
-        
+
         try
         {
             var options = string.IsNullOrWhiteSpace(parameters.NugetFeedKey)
@@ -95,14 +93,24 @@ public class NuGetService : INuGetService
             return new NotFoundNuGetPackage(file, file, $"Failed to upload nuget package {file}: {ex.Message}");
         }
     }
-    
+
     private async Task<NuGetPackage> DownloadNugetPackageAsync(string packageName, string packageVersion, NuGetParameters parameters, CancellationToken cancellationToken)
     {
         try
         {
             using var cache = new SourceCacheContext();
             var downloadDirectory = parameters.WorkingDirectory;
-            var repository = Repository.Factory.GetCoreV3(_options.Value.NugetFeed);
+            var packageSource = new PackageSource(parameters.NugetFeedUrl);
+            if (!string.IsNullOrWhiteSpace(parameters.NugetFeedUsername) && !string.IsNullOrWhiteSpace(parameters.NugetFeedPassword))
+            {
+                packageSource.Credentials = new PackageSourceCredential(
+                    source: parameters.NugetFeedUrl,
+                    username: parameters.NugetFeedUsername,
+                    passwordText: parameters.NugetFeedPassword,
+                    isPasswordClearText: true,
+                    validAuthenticationTypesText: null);
+            }
+            var repository = Repository.Factory.GetCoreV3(packageSource);
             var resource = await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
             var packagePath = Path.GetFullPath(Path.Combine(downloadDirectory, $"{packageName}.{packageVersion}.nupkg"));
             await using var packageStream = File.OpenWrite(packagePath);
@@ -113,7 +121,7 @@ public class NuGetService : INuGetService
                 cache,
                 NullLogger.Instance,
                 cancellationToken);
-            
+
             var fileInfo = new FileInfo(packagePath);
             if (fileInfo.Length == 0)
             {

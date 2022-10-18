@@ -7,5 +7,7 @@ public class NuGetParameters
     public string PackagesFile { get; set; }
     public string NugetFeedUrl { get; set; }
     public string NugetFeedKey { get; set; }
+    public string NugetFeedUsername { get; set; }
+    public string NugetFeedPassword { get; set; }
     public string WorkingDirectory { get; set; }
 }
