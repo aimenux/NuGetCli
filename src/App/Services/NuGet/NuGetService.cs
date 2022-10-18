@@ -10,6 +10,8 @@ namespace App.Services.NuGet;
 
 public class NuGetService : INuGetService
 {
+    private const int ChunkSize = 50;
+    private const int TimeoutInSeconds = 90;
     private readonly IProcessService _processService;
     private readonly IOptions<Settings> _options;
 
@@ -19,33 +21,29 @@ public class NuGetService : INuGetService
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public async Task<ICollection<NuGetPackage>> UploadNugetPackagesAsync(NuGetParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<ICollection<NuGetPackage>> UploadNugetPackagesAsync(NuGetParameters parameters, CancellationToken cancellationToken)
     {
-        var files = GetNugetPackageFiles(parameters.WorkingDirectory);
-
-        var options = string.IsNullOrWhiteSpace(parameters.NugetFeedKey)
-            ? $"--source {parameters.NugetFeedUrl} --skip-duplicate"
-            : $"--source {parameters.NugetFeedUrl} --api-key {parameters.NugetFeedKey} --skip-duplicate";
-
+        var nugetPackagesFiles = GetNugetPackageFiles(parameters.WorkingDirectory);
+        
         var nugetPackages = new List<NuGetPackage>();
-
-        foreach (var file in files)
+        foreach (var files in nugetPackagesFiles.Chunk(ChunkSize))
         {
-            try
-            {
-                await _processService.RunProcessAsync("dotnet", $"nuget push {file} {options}", cancellationToken);
-                nugetPackages.Add(new NuGetPackage(file, file));
-            }
-            catch (Exception ex)
-            {
-                nugetPackages.Add(new NotFoundNuGetPackage(file, file, ex.Message));
-            }
+            var filesTasks = files
+                .Select(x => UploadNugetPackageAsync(x, parameters, cancellationToken))
+                .ToList();
+            await Task.WhenAll(filesTasks);
+            var results = filesTasks
+                .Select(x => x.Result)
+                .ToList();
+            nugetPackages.AddRange(results);
         }
-
-        return nugetPackages;
+        return nugetPackages
+            .OrderBy(x => x.Name)
+            .ThenBy(x => x.Version)
+            .ToList();
     }
 
-    public async Task<ICollection<NuGetPackage>> DownloadNugetPackagesAsync(NuGetParameters parameters, CancellationToken cancellationToken = default)
+    public async Task<ICollection<NuGetPackage>> DownloadNugetPackagesAsync(NuGetParameters parameters, CancellationToken cancellationToken)
     {
         var packagesFile = parameters.PackagesFile;
 
@@ -53,17 +51,16 @@ public class NuGetService : INuGetService
         {
             var packageName = parameters.PackageName;
             var packageVersion = parameters.PackageVersion;
-            var nugetPackage = await DownloadNugetPackageAsync(packageName, packageVersion, parameters.WorkingDirectory, cancellationToken);
+            var nugetPackage = await DownloadNugetPackageAsync(packageName, packageVersion, parameters, cancellationToken);
             return new List<NuGetPackage> { nugetPackage };
         }
 
-        const int chunkSize = 100;
         var nugetPackages = new List<NuGetPackage>();
         var packagesToDownload = await ParseBuildLogFileAsync(packagesFile, cancellationToken);
-        foreach (var packages in packagesToDownload.Chunk(chunkSize))
+        foreach (var packages in packagesToDownload.Chunk(ChunkSize))
         {
             var packagesTasks = packages
-                .Select(x => DownloadNugetPackageAsync(x.Name, x.Version, parameters.WorkingDirectory, cancellationToken))
+                .Select(x => DownloadNugetPackageAsync(x.Name, x.Version, parameters, cancellationToken))
                 .ToList();
             await Task.WhenAll(packagesTasks);
             var results = packagesTasks
@@ -71,14 +68,40 @@ public class NuGetService : INuGetService
                 .ToList();
             nugetPackages.AddRange(results);
         }
-        return nugetPackages;
+        return nugetPackages
+            .OrderBy(x => x.Name)
+            .ThenBy(x => x.Version)
+            .ToList();
     }
 
-    private async Task<NuGetPackage> DownloadNugetPackageAsync(string packageName, string packageVersion, string downloadDirectory, CancellationToken cancellationToken)
+    private async Task<NuGetPackage> UploadNugetPackageAsync(string file, NuGetParameters parameters, CancellationToken cancellationToken)
+    {
+        var fileInfo = new FileInfo(file);
+        if (fileInfo.Length == 0)
+        {
+            return new NotFoundNuGetPackage(file, file, $"Failed to upload nuget package {file}: Size is 0KB");
+        }
+        
+        try
+        {
+            var options = string.IsNullOrWhiteSpace(parameters.NugetFeedKey)
+                ? $"--source {parameters.NugetFeedUrl} --no-symbols --skip-duplicate --timeout {TimeoutInSeconds}"
+                : $"--source {parameters.NugetFeedUrl} --api-key {parameters.NugetFeedKey} --no-symbols --skip-duplicate --timeout {TimeoutInSeconds}";
+            await _processService.RunProcessAsync("dotnet", $"nuget push {file} {options}", cancellationToken);
+            return new NuGetPackage(file, file);
+        }
+        catch (Exception ex)
+        {
+            return new NotFoundNuGetPackage(file, file, $"Failed to upload nuget package {file}: {ex.Message}");
+        }
+    }
+    
+    private async Task<NuGetPackage> DownloadNugetPackageAsync(string packageName, string packageVersion, NuGetParameters parameters, CancellationToken cancellationToken)
     {
         try
         {
             using var cache = new SourceCacheContext();
+            var downloadDirectory = parameters.WorkingDirectory;
             var repository = Repository.Factory.GetCoreV3(_options.Value.NugetFeed);
             var resource = await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
             var packagePath = Path.GetFullPath(Path.Combine(downloadDirectory, $"{packageName}.{packageVersion}.nupkg"));
@@ -90,6 +113,12 @@ public class NuGetService : INuGetService
                 cache,
                 NullLogger.Instance,
                 cancellationToken);
+            
+            var fileInfo = new FileInfo(packagePath);
+            if (fileInfo.Length == 0)
+            {
+                return new NotFoundNuGetPackage(packageName, packageVersion, $"Failed to download nuget package {packageName} {packageVersion}: Size is 0KB");
+            }
 
             return ok
                 ? new NuGetPackage(packageName, packageVersion)
