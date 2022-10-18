@@ -19,12 +19,12 @@ public class DownloadCommand : AbstractCommand
 
     [Option("-v|--version", "Package version", CommandOptionType.SingleValue)]
     public string PackageVersion { get; set; }
-    
+
     [Option("-f|--file", "Packages file", CommandOptionType.SingleValue)]
     public string PackagesFile { get; set; }
 
-    [Option("-o|--output", "OutputDirectory", CommandOptionType.SingleValue)]
-    public string OutputDirectory { get; set; } = Settings.GetWorkingDirectory();
+    [Option("-d|--dir", "Packages directory", CommandOptionType.SingleValue)]
+    public string WorkingDirectory { get; set; } = Settings.GetWorkingDirectory();
 
     protected override async Task ExecuteAsync(CommandLineApplication app, CancellationToken cancellationToken = default)
     {
@@ -33,25 +33,25 @@ public class DownloadCommand : AbstractCommand
             PackageName = PackageName,
             PackageVersion = PackageVersion,
             PackagesFile = PackagesFile,
-            OutputDirectory = OutputDirectory
+            WorkingDirectory = WorkingDirectory
         };
-        
+
         await ConsoleService.RenderStatusAsync(async () =>
         {
             var nugetPackages = await _nuGetService.DownloadNugetPackagesAsync(parameters, cancellationToken);
-            ConsoleService.RenderNugetPackages(nugetPackages);
+            ConsoleService.RenderNugetPackages(nugetPackages, parameters);
         });
     }
 
     protected override bool HasValidOptions()
     {
-        if (!Directory.Exists(OutputDirectory)) return false;
+        if (!Directory.Exists(WorkingDirectory)) return false;
 
         if (!string.IsNullOrWhiteSpace(PackagesFile))
         {
             return File.Exists(PackagesFile);
         }
-        
+
         return !string.IsNullOrWhiteSpace(PackageName)
                && !string.IsNullOrWhiteSpace(PackageVersion);
     }

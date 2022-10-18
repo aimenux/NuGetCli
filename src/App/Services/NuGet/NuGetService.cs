@@ -1,4 +1,5 @@
 using App.Extensions;
+using App.Services.Process;
 using Microsoft.Extensions.Options;
 using NuGet.Common;
 using NuGet.Protocol;
@@ -9,11 +10,39 @@ namespace App.Services.NuGet;
 
 public class NuGetService : INuGetService
 {
+    private readonly IProcessService _processService;
     private readonly IOptions<Settings> _options;
 
-    public NuGetService(IOptions<Settings> options)
+    public NuGetService(IProcessService processService, IOptions<Settings> options)
     {
+        _processService = processService ?? throw new ArgumentNullException(nameof(processService));
         _options = options ?? throw new ArgumentNullException(nameof(options));
+    }
+
+    public async Task<ICollection<NuGetPackage>> UploadNugetPackagesAsync(NuGetParameters parameters, CancellationToken cancellationToken = default)
+    {
+        var files = GetNugetPackageFiles(parameters.WorkingDirectory);
+
+        var options = string.IsNullOrWhiteSpace(parameters.NugetFeedKey)
+            ? $"--source {parameters.NugetFeedUrl} --skip-duplicate"
+            : $"--source {parameters.NugetFeedUrl} --api-key {parameters.NugetFeedKey} --skip-duplicate";
+
+        var nugetPackages = new List<NuGetPackage>();
+
+        foreach (var file in files)
+        {
+            try
+            {
+                await _processService.RunProcessAsync("dotnet", $"nuget push {file} {options}", cancellationToken);
+                nugetPackages.Add(new NuGetPackage(file, file));
+            }
+            catch (Exception ex)
+            {
+                nugetPackages.Add(new NotFoundNuGetPackage(file, file, ex.Message));
+            }
+        }
+
+        return nugetPackages;
     }
 
     public async Task<ICollection<NuGetPackage>> DownloadNugetPackagesAsync(NuGetParameters parameters, CancellationToken cancellationToken = default)
@@ -24,7 +53,7 @@ public class NuGetService : INuGetService
         {
             var packageName = parameters.PackageName;
             var packageVersion = parameters.PackageVersion;
-            var nugetPackage = await DownloadNugetPackageAsync(packageName, packageVersion, parameters.OutputDirectory, cancellationToken);
+            var nugetPackage = await DownloadNugetPackageAsync(packageName, packageVersion, parameters.WorkingDirectory, cancellationToken);
             return new List<NuGetPackage> { nugetPackage };
         }
 
@@ -34,7 +63,7 @@ public class NuGetService : INuGetService
         foreach (var packages in packagesToDownload.Chunk(chunkSize))
         {
             var packagesTasks = packages
-                .Select(x => DownloadNugetPackageAsync(x.Name, x.Version, parameters.OutputDirectory, cancellationToken))
+                .Select(x => DownloadNugetPackageAsync(x.Name, x.Version, parameters.WorkingDirectory, cancellationToken))
                 .ToList();
             await Task.WhenAll(packagesTasks);
             var results = packagesTasks
@@ -102,5 +131,21 @@ public class NuGetService : INuGetService
         if (parts.Length != 2) return false;
         nuGetPackage = new NuGetPackage(parts[1], parts[0]);
         return true;
+    }
+
+    private static ICollection<string> GetNugetPackageFiles(string directory)
+    {
+        var directoryOptions = new EnumerationOptions
+        {
+            RecurseSubdirectories = true
+        };
+
+        var files = Directory
+            .GetFiles(directory, "*.nupkg", directoryOptions)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
+
+        return files;
     }
 }

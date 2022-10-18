@@ -6,7 +6,7 @@ using static App.Extensions.PathExtensions;
 namespace App.Commands;
 
 [Command(Name = Settings.CommandName, FullName = "NuGet cli", Description = "A net global tool helping to upload/download nuget packages.")]
-[Subcommand(typeof(DownloadCommand))]
+[Subcommand(typeof(UploadCommand), typeof(DownloadCommand))]
 [VersionOptionFromMember(MemberName = nameof(GetVersion))]
 public class MainCommand : AbstractCommand
 {

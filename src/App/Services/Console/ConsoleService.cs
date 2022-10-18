@@ -33,30 +33,58 @@ public class ConsoleService : IConsoleService
             });
     }
 
-    public void RenderNugetPackages(ICollection<NuGetPackage> nugetPackages)
+    public void RenderNugetPackages(ICollection<NuGetPackage> nugetPackages, NuGetParameters parameters)
     {
-        var table = new Table()
-            .BorderColor(Color.White)
-            .Border(TableBorder.Square)
-            .Title($"[yellow]{nugetPackages.Count} package(s)[/]")
-            .AddColumn(new TableColumn($"[u]Name[/]").Centered())
-            .AddColumn(new TableColumn($"[u]Version[/]").Centered())
-            .AddColumn(new TableColumn($"[u]Status[/]").Centered());
+        var isDownloadMode = string.IsNullOrWhiteSpace(parameters.NugetFeedUrl);
 
-        foreach (var nugetPackage in nugetPackages)
+        if (isDownloadMode)
         {
-            var name = nugetPackage.Name;
-            var version = nugetPackage.Version;
-            var status = nugetPackage is not NotFoundNuGetPackage
-                ? Emoji.Known.CheckMarkButton
-                : Emoji.Known.CrossMark;
+            var table = new Table()
+                .BorderColor(Color.White)
+                .Border(TableBorder.Square)
+                .Title($"[yellow]{nugetPackages.Count} package(s)[/]")
+                .AddColumn(new TableColumn($"[u]Name[/]").Centered())
+                .AddColumn(new TableColumn($"[u]Version[/]").Centered())
+                .AddColumn(new TableColumn($"[u]Status[/]").Centered());
 
-            table.AddRow(name.ToMarkup(), version.ToMarkup(), status.ToMarkup());
+            foreach (var nugetPackage in nugetPackages)
+            {
+                var name = nugetPackage.Name;
+                var version = nugetPackage.Version;
+                var status = nugetPackage is not NotFoundNuGetPackage
+                    ? Emoji.Known.CheckMarkButton
+                    : Emoji.Known.CrossMark;
+
+                table.AddRow(name.ToMarkup(), version.ToMarkup(), status.ToMarkup());
+            }
+
+            AnsiConsole.WriteLine();
+            AnsiConsole.Write(table);
+            AnsiConsole.WriteLine();
         }
+        else
+        {
+            var table = new Table()
+                .BorderColor(Color.White)
+                .Border(TableBorder.Square)
+                .Title($"[yellow]{nugetPackages.Count} package(s)[/]")
+                .AddColumn(new TableColumn($"[u]Name[/]").Centered())
+                .AddColumn(new TableColumn($"[u]Status[/]").Centered());
 
-        AnsiConsole.WriteLine();
-        AnsiConsole.Write(table);
-        AnsiConsole.WriteLine();
+            foreach (var nugetPackage in nugetPackages)
+            {
+                var name = nugetPackage.Name;
+                var status = nugetPackage is not NotFoundNuGetPackage
+                    ? Emoji.Known.CheckMarkButton
+                    : Emoji.Known.CrossMark;
+
+                table.AddRow(name.ToMarkup(), status.ToMarkup());
+            }
+
+            AnsiConsole.WriteLine();
+            AnsiConsole.Write(table);
+            AnsiConsole.WriteLine();
+        }
     }
 
     public void RenderSettingsFile(string filepath)
