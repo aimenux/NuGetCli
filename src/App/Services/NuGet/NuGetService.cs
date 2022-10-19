@@ -101,15 +101,6 @@ public class NuGetService : INuGetService
             using var cache = new SourceCacheContext();
             var downloadDirectory = parameters.WorkingDirectory;
             var packageSource = new PackageSource(parameters.NugetFeedUrl);
-            if (!string.IsNullOrWhiteSpace(parameters.NugetFeedUsername) && !string.IsNullOrWhiteSpace(parameters.NugetFeedPassword))
-            {
-                packageSource.Credentials = new PackageSourceCredential(
-                    source: parameters.NugetFeedUrl,
-                    username: parameters.NugetFeedUsername,
-                    passwordText: parameters.NugetFeedPassword,
-                    isPasswordClearText: true,
-                    validAuthenticationTypesText: null);
-            }
             var repository = Repository.Factory.GetCoreV3(packageSource);
             var resource = await repository.GetResourceAsync<FindPackageByIdResource>(cancellationToken);
             var packagePath = Path.GetFullPath(Path.Combine(downloadDirectory, $"{packageName}.{packageVersion}.nupkg"));
