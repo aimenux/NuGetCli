@@ -12,7 +12,7 @@ public class NuGetPackage
 
     public string Name { get; }
     public string Version { get; }
-    
+
     public override bool Equals(object obj)
     {
         if (obj is not NuGetPackage item)
@@ -30,12 +30,12 @@ public class NuGetPackage
     }
 }
 
-public class NotFoundNuGetPackage : NuGetPackage
+public class FailedNuGetPackage : NuGetPackage
 {
-    public NotFoundNuGetPackage(string name, string version, string reason) : base(name, version)
+    public FailedNuGetPackage(string name, string version, string reason) : base(name, version)
     {
         Reason = reason;
     }
-    
+
     public string Reason { get; }
 }

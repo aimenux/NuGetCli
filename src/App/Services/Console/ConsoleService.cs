@@ -51,7 +51,7 @@ public class ConsoleService : IConsoleService
             {
                 var name = nugetPackage.Name;
                 var version = nugetPackage.Version;
-                var status = nugetPackage is not NotFoundNuGetPackage
+                var status = nugetPackage is not FailedNuGetPackage
                     ? Emoji.Known.CheckMarkButton
                     : Emoji.Known.CrossMark;
 
@@ -74,7 +74,7 @@ public class ConsoleService : IConsoleService
             foreach (var nugetPackage in nugetPackages)
             {
                 var name = nugetPackage.Name;
-                var status = nugetPackage is not NotFoundNuGetPackage
+                var status = nugetPackage is not FailedNuGetPackage
                     ? Emoji.Known.CheckMarkButton
                     : Emoji.Known.CrossMark;
 

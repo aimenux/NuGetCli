@@ -77,7 +77,7 @@ public class NuGetService : INuGetService
         var fileInfo = new FileInfo(file);
         if (fileInfo.Length == 0)
         {
-            return new NotFoundNuGetPackage(file, file, $"Failed to upload nuget package {file}: Size is 0KB");
+            return new FailedNuGetPackage(file, file, $"Failed to upload nuget package {file}: Size is 0KB");
         }
 
         try
@@ -90,7 +90,7 @@ public class NuGetService : INuGetService
         }
         catch (Exception ex)
         {
-            return new NotFoundNuGetPackage(file, file, $"Failed to upload nuget package {file}: {ex.Message}");
+            return new FailedNuGetPackage(file, file, $"Failed to upload nuget package {file}: {ex.Message}");
         }
     }
 
@@ -116,16 +116,16 @@ public class NuGetService : INuGetService
             var fileInfo = new FileInfo(packagePath);
             if (fileInfo.Length == 0)
             {
-                return new NotFoundNuGetPackage(packageName, packageVersion, $"Failed to download nuget package {packageName} {packageVersion}: Size is 0KB");
+                return new FailedNuGetPackage(packageName, packageVersion, $"Failed to download nuget package {packageName} {packageVersion}: Size is 0KB");
             }
 
             return ok
                 ? new NuGetPackage(packageName, packageVersion)
-                : new NotFoundNuGetPackage(packageName, packageVersion, $"Failed to download nuget package {packageName} {packageVersion}");
+                : new FailedNuGetPackage(packageName, packageVersion, $"Failed to download nuget package {packageName} {packageVersion}");
         }
         catch (Exception ex)
         {
-            return new NotFoundNuGetPackage(packageName, packageVersion, $"Failed to download nuget package {packageName} {packageVersion}: {ex.Message}");
+            return new FailedNuGetPackage(packageName, packageVersion, $"Failed to download nuget package {packageName} {packageVersion}: {ex.Message}");
         }
     }
 
