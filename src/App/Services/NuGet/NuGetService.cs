@@ -1,5 +1,5 @@
+using System.Net;
 using App.Extensions;
-using App.Services.Process;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Protocol;
@@ -12,12 +12,6 @@ public class NuGetService : INuGetService
 {
     private const int ChunkSize = 50;
     private const int TimeoutInSeconds = 90;
-    private readonly IProcessService _processService;
-
-    public NuGetService(IProcessService processService)
-    {
-        _processService = processService ?? throw new ArgumentNullException(nameof(processService));
-    }
 
     public async Task<ICollection<NuGetPackage>> UploadNugetPackagesAsync(NuGetParameters parameters, CancellationToken cancellationToken)
     {
@@ -77,24 +71,36 @@ public class NuGetService : INuGetService
         var fileInfo = new FileInfo(file);
         if (fileInfo.Length == 0)
         {
-            return new FailedNuGetPackage(file, file, $"Failed to upload nuget package {file}: Size is 0KB");
+            return new FailedNuGetPackage(file, file, "Size is 0KB");
         }
 
         try
         {
-            var options = string.IsNullOrWhiteSpace(parameters.NugetFeedKey)
-                ? $"--source {parameters.NugetFeedUrl} --no-symbols --skip-duplicate --timeout {TimeoutInSeconds}"
-                : $"--source {parameters.NugetFeedUrl} --api-key {parameters.NugetFeedKey} --no-symbols --skip-duplicate --timeout {TimeoutInSeconds}";
-            await _processService.RunProcessAsync("dotnet", $"nuget push {file} {options}", cancellationToken);
+            var packageSource = new PackageSource(parameters.NugetFeedUrl);
+            var repository = Repository.Factory.GetCoreV3(packageSource);
+            var resource = await repository.GetResourceAsync<PackageUpdateResource>(cancellationToken);
+            await resource.Push(
+                new[] { file },
+                symbolSource: null,
+                timeoutInSecond: TimeoutInSeconds,
+                disableBuffering: false,
+                getApiKey: _ => parameters.NugetFeedKey,
+                getSymbolApiKey: _ => null,
+                noServiceEndpoint: false,
+                skipDuplicate: true,
+                symbolPackageUpdateResource: null,
+                NullLogger.Instance);
             return new NuGetPackage(file, file);
         }
         catch (Exception ex)
         {
-            return new FailedNuGetPackage(file, file, $"Failed to upload nuget package {file}: {ex.Message}");
+            return ex is HttpRequestException { StatusCode: HttpStatusCode.BadRequest }
+                ? new NuGetPackage(file, file)
+                : new FailedNuGetPackage(file, file, ex.Message);
         }
     }
 
-    private async Task<NuGetPackage> DownloadNugetPackageAsync(string packageName, string packageVersion, NuGetParameters parameters, CancellationToken cancellationToken)
+    private static async Task<NuGetPackage> DownloadNugetPackageAsync(string packageName, string packageVersion, NuGetParameters parameters, CancellationToken cancellationToken)
     {
         try
         {
@@ -116,16 +122,16 @@ public class NuGetService : INuGetService
             var fileInfo = new FileInfo(packagePath);
             if (fileInfo.Length == 0)
             {
-                return new FailedNuGetPackage(packageName, packageVersion, $"Failed to download nuget package {packageName} {packageVersion}: Size is 0KB");
+                return new FailedNuGetPackage(packageName, packageVersion, "Size is 0KB");
             }
 
             return ok
                 ? new NuGetPackage(packageName, packageVersion)
-                : new FailedNuGetPackage(packageName, packageVersion, $"Failed to download nuget package {packageName} {packageVersion}");
+                : new FailedNuGetPackage(packageName, packageVersion, "Unknown reason");
         }
         catch (Exception ex)
         {
-            return new FailedNuGetPackage(packageName, packageVersion, $"Failed to download nuget package {packageName} {packageVersion}: {ex.Message}");
+            return new FailedNuGetPackage(packageName, packageVersion, ex.Message);
         }
     }
 
@@ -170,7 +176,7 @@ public class NuGetService : INuGetService
 
         var files = Directory
             .GetFiles(directory, "*.nupkg", directoryOptions)
-            .Distinct()
+            .DistinctBy(Path.GetFileName)
             .OrderBy(x => x)
             .ToList();
 

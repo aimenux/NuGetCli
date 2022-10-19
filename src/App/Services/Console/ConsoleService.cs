@@ -35,55 +35,14 @@ public class ConsoleService : IConsoleService
 
     public void RenderNugetPackages(ICollection<NuGetPackage> nugetPackages, NuGetParameters parameters)
     {
-        var isDownloadMode = string.IsNullOrWhiteSpace(parameters.NugetFeedUrl);
-
-        if (isDownloadMode)
+        switch (parameters.Mode)
         {
-            var table = new Table()
-                .BorderColor(Color.White)
-                .Border(TableBorder.Square)
-                .Title($"[yellow]{nugetPackages.Count} package(s)[/]")
-                .AddColumn(new TableColumn($"[u]Name[/]").Centered())
-                .AddColumn(new TableColumn($"[u]Version[/]").Centered())
-                .AddColumn(new TableColumn($"[u]Status[/]").Centered());
-
-            foreach (var nugetPackage in nugetPackages)
-            {
-                var name = nugetPackage.Name;
-                var version = nugetPackage.Version;
-                var status = nugetPackage is not FailedNuGetPackage
-                    ? Emoji.Known.CheckMarkButton
-                    : Emoji.Known.CrossMark;
-
-                table.AddRow(name.ToMarkup(), version.ToMarkup(), status.ToMarkup());
-            }
-
-            AnsiConsole.WriteLine();
-            AnsiConsole.Write(table);
-            AnsiConsole.WriteLine();
-        }
-        else
-        {
-            var table = new Table()
-                .BorderColor(Color.White)
-                .Border(TableBorder.Square)
-                .Title($"[yellow]{nugetPackages.Count} package(s)[/]")
-                .AddColumn(new TableColumn($"[u]Name[/]").Centered())
-                .AddColumn(new TableColumn($"[u]Status[/]").Centered());
-
-            foreach (var nugetPackage in nugetPackages)
-            {
-                var name = nugetPackage.Name;
-                var status = nugetPackage is not FailedNuGetPackage
-                    ? Emoji.Known.CheckMarkButton
-                    : Emoji.Known.CrossMark;
-
-                table.AddRow(name.ToMarkup(), status.ToMarkup());
-            }
-
-            AnsiConsole.WriteLine();
-            AnsiConsole.Write(table);
-            AnsiConsole.WriteLine();
+            case NuGetParametersMode.Upload:
+                RenderNugetPackagesForUpload(nugetPackages);
+                break;
+            case NuGetParametersMode.Download:
+                RenderNugetPackagesForDownload(nugetPackages);
+                break;
         }
     }
 
@@ -114,6 +73,60 @@ public class ConsoleService : IConsoleService
 
         AnsiConsole.WriteLine();
         AnsiConsole.WriteException(exception, formats);
+        AnsiConsole.WriteLine();
+    }
+
+    private static void RenderNugetPackagesForUpload(ICollection<NuGetPackage> nugetPackages)
+    {
+        var anyFailure = nugetPackages.Any(x => x is FailedNuGetPackage);
+
+        var table = new Table()
+            .BorderColor(Color.White)
+            .Border(TableBorder.Square)
+            .Title($"[yellow]{nugetPackages.Count} package(s)[/]")
+            .AddColumn(new TableColumn($"[u]Name[/]").LeftAligned())
+            .AddColumn(new TableColumn($"[u]Status[/]").WithStyle(anyFailure));
+
+        foreach (var nugetPackage in nugetPackages)
+        {
+            var name = nugetPackage.Name;
+            var status = nugetPackage is FailedNuGetPackage failedNuGetPackage
+                ? $"{Emoji.Known.CrossMark} [grey][bold]{failedNuGetPackage.Reason}[/][/]"
+                : Emoji.Known.CheckMarkButton;
+
+            table.AddRow(name.ToMarkup(), status.ToMarkup());
+        }
+
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(table);
+        AnsiConsole.WriteLine();
+    }
+
+    private static void RenderNugetPackagesForDownload(ICollection<NuGetPackage> nugetPackages)
+    {
+        var anyFailure = nugetPackages.Any(x => x is FailedNuGetPackage);
+
+        var table = new Table()
+            .BorderColor(Color.White)
+            .Border(TableBorder.Square)
+            .Title($"[yellow]{nugetPackages.Count} package(s)[/]")
+            .AddColumn(new TableColumn($"[u]Name[/]").LeftAligned())
+            .AddColumn(new TableColumn($"[u]Version[/]").WithStyle(anyFailure))
+            .AddColumn(new TableColumn($"[u]Status[/]").WithStyle(anyFailure));
+
+        foreach (var nugetPackage in nugetPackages)
+        {
+            var name = nugetPackage.Name;
+            var version = nugetPackage.Version;
+            var status = nugetPackage is FailedNuGetPackage failedNuGetPackage
+                ? $"{Emoji.Known.CrossMark} [grey][bold]{failedNuGetPackage.Reason}[/][/]"
+                : Emoji.Known.CheckMarkButton;
+
+            table.AddRow(name.ToMarkup(), version.ToMarkup(), status.ToMarkup());
+        }
+
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(table);
         AnsiConsole.WriteLine();
     }
 

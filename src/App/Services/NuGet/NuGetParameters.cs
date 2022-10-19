@@ -8,4 +8,12 @@ public class NuGetParameters
     public string NugetFeedUrl { get; set; }
     public string NugetFeedKey { get; set; }
     public string WorkingDirectory { get; set; }
+    public NuGetParametersMode Mode { get; set; }
+}
+
+public enum NuGetParametersMode
+{
+    None,
+    Upload,
+    Download
 }

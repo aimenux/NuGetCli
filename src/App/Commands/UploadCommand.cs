@@ -29,7 +29,8 @@ public class UploadCommand : AbstractCommand
         {
             NugetFeedUrl = NugetFeedUrl,
             NugetFeedKey = NugetFeedKey,
-            WorkingDirectory = WorkingDirectory
+            WorkingDirectory = WorkingDirectory,
+            Mode = NuGetParametersMode.Upload
         };
 
         await ConsoleService.RenderStatusAsync(async () =>

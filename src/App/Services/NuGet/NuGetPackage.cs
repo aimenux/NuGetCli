@@ -34,7 +34,7 @@ public class FailedNuGetPackage : NuGetPackage
 {
     public FailedNuGetPackage(string name, string version, string reason) : base(name, version)
     {
-        Reason = reason;
+        Reason = reason.Trim(' ', '.');
     }
 
     public string Reason { get; }

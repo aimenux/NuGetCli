@@ -37,7 +37,8 @@ public class DownloadCommand : AbstractCommand
             PackageName = PackageName,
             PackageVersion = PackageVersion,
             PackagesFile = PackagesFile,
-            WorkingDirectory = WorkingDirectory
+            WorkingDirectory = WorkingDirectory,
+            Mode = NuGetParametersMode.Download
         };
 
         await ConsoleService.RenderStatusAsync(async () =>
