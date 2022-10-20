@@ -4,7 +4,7 @@ using McMaster.Extensions.CommandLineUtils;
 
 namespace App.Commands;
 
-[Command(Name = "Download", FullName = "Download nuget packages", Description = "Download nuget packages.")]
+[Command(Name = "Download", FullName = "Download nuget packages", Description = "Download nuget packages from nuget feed to directory.")]
 public class DownloadCommand : AbstractCommand
 {
     private readonly INuGetService _nuGetService;

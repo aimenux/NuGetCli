@@ -4,7 +4,7 @@ using McMaster.Extensions.CommandLineUtils;
 
 namespace App.Commands;
 
-[Command(Name = "Upload", FullName = "Upload nuget packages", Description = "Upload nuget packages.")]
+[Command(Name = "Upload", FullName = "Upload nuget packages", Description = "Upload nuget packages from directory to nuget feed.")]
 public class UploadCommand : AbstractCommand
 {
     private readonly INuGetService _nuGetService;

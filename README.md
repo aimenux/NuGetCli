@@ -15,13 +15,13 @@ Providing a net global tool to upload/download nuget packages
 > To run the tool, type commands :
 > - `NuGetCli -h` to show help
 > - `NuGetCli -s` to show settings
-> - `NuGetCli Upload -u [url]` to upload nuget packages
-> - `NuGetCli Upload -u [url] -k [apikey]` to upload nuget packages
-> - `NuGetCli Upload -u [url] -d [directory]` to upload nuget packages
-> - `NuGetCli Download -f [file]` to download nuget packages
-> - `NuGetCli Download -f [file] -d [directory]` to download nuget packages
-> - `NuGetCli Download -n [name] -v [version]` to download nuget package
-> - `NuGetCli Download -n [name] -v [version] -d [directory]` to download nuget package
+> - `NuGetCli Upload -u [url]` to upload nuget packages from directory to nuget feed
+> - `NuGetCli Upload -u [url] -k [apikey]` to upload nuget packages from directory to nuget feed
+> - `NuGetCli Upload -u [url] -d [directory]` to upload nuget packages from directory to nuget feed
+> - `NuGetCli Download -f [file]` to download nuget packages from nuget feed to directory
+> - `NuGetCli Download -f [file] -d [directory]` to download nuget packages from nuget feed to directory
+> - `NuGetCli Download -n [name] -v [version]` to download nuget package from nuget feed to directory
+> - `NuGetCli Download -n [name] -v [version] -d [directory]` to download nuget package from nuget feed to directory
 >
 >
 > To install global tool from a local source path, type commands :
