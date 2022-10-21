@@ -1,4 +1,5 @@
-﻿using App.Services.Console;
+﻿using App.Models;
+using App.Services.Console;
 using App.Services.NuGet;
 using McMaster.Extensions.CommandLineUtils;
 
@@ -40,9 +41,20 @@ public class UploadCommand : AbstractCommand
         });
     }
 
-    protected override bool HasValidOptions()
+    protected override bool HasValidOptionsAndArguments(out ValidationErrors validationErrors)
     {
-        return Directory.Exists(WorkingDirectory)
-               && !string.IsNullOrWhiteSpace(NugetFeedUrl);
+        validationErrors = new ValidationErrors();
+
+        if (string.IsNullOrWhiteSpace(NugetFeedUrl))
+        {
+            validationErrors.Add("-u|--url", "Feed url is mandatory");
+        }
+
+        if (!Directory.Exists(WorkingDirectory))
+        {
+            validationErrors.Add("-d|--dir", $"Directory '{WorkingDirectory}' does not exist");
+        }
+
+        return !validationErrors.Any();
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace App;
+﻿namespace App.Models;
 
 public class Settings
 {

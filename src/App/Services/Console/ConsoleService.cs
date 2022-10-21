@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using App.Extensions;
+using App.Models;
 using App.Services.NuGet;
 using Spectre.Console;
 
@@ -64,6 +65,31 @@ public class ConsoleService : IConsoleService
     }
 
     public void RenderException(Exception exception) => RenderAnyException(exception);
+
+    public void RenderValidationErrors(ValidationErrors validationErrors)
+    {
+        var count = validationErrors.Count;
+
+        var table = new Table()
+            .BorderColor(Color.White)
+            .Border(TableBorder.Square)
+            .Title($"[red][bold]{count} error(s)[/][/]")
+            .AddColumn(new TableColumn("[u]Option[/]").Centered())
+            .AddColumn(new TableColumn("[u]Reason[/]").Centered())
+            .Caption("[grey][bold]Invalid options/arguments[/][/]");
+
+        foreach (var error in validationErrors)
+        {
+            var name = $"[bold]{error.Name}[/]";
+            var reason = $"[tan]{error.Reason}[/]";
+
+            table.AddRow(name.ToMarkup(), reason.ToMarkup());
+        }
+
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(table);
+        AnsiConsole.WriteLine();
+    }
 
     public static void RenderAnyException<T>(T exception) where T : Exception
     {

@@ -1,4 +1,5 @@
-﻿using App.Services.Console;
+﻿using App.Models;
+using App.Services.Console;
 using App.Services.NuGet;
 using McMaster.Extensions.CommandLineUtils;
 
@@ -48,18 +49,40 @@ public class DownloadCommand : AbstractCommand
         });
     }
 
-    protected override bool HasValidOptions()
+    protected override bool HasValidOptionsAndArguments(out ValidationErrors validationErrors)
     {
-        if (!Directory.Exists(WorkingDirectory)) return false;
+        validationErrors = new ValidationErrors();
 
-        if (string.IsNullOrWhiteSpace(NugetFeedUrl)) return false;
+        if (string.IsNullOrWhiteSpace(NugetFeedUrl))
+        {
+            validationErrors.Add("-u|--url", "Feed url is mandatory");
+        }
+
+        if (!Directory.Exists(WorkingDirectory))
+        {
+            validationErrors.Add("-d|--dir", $"Directory '{WorkingDirectory}' does not exist");
+        }
 
         if (!string.IsNullOrWhiteSpace(PackagesFile))
         {
-            return File.Exists(PackagesFile);
+            if (!File.Exists(PackagesFile))
+            {
+                validationErrors.Add("-f|--file", $"File '{PackagesFile}' does not exist");
+            }
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(PackageName))
+            {
+                validationErrors.Add("-n|--name", "Package name is mandatory");
+            }
+
+            if (string.IsNullOrWhiteSpace(PackageVersion))
+            {
+                validationErrors.Add("-v|--version", "Package version is mandatory");
+            }
         }
 
-        return !string.IsNullOrWhiteSpace(PackageName)
-               && !string.IsNullOrWhiteSpace(PackageVersion);
+        return !validationErrors.Any();
     }
 }

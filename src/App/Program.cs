@@ -1,5 +1,6 @@
 ﻿using App.Commands;
 using App.Extensions;
+using App.Models;
 using App.Services.Console;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,15 +11,16 @@ namespace App;
 
 public static class Program
 {
-    public static async Task Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         try
         {
-            await CreateHostBuilder(args).RunCommandLineApplicationAsync<MainCommand>(args);
+            return await CreateHostBuilder(args).RunCommandLineApplicationAsync<MainCommand>(args);
         }
         catch (Exception ex)
         {
             ConsoleService.RenderAnyException(ex);
+            return ExitCode.Ko;
         }
     }
 

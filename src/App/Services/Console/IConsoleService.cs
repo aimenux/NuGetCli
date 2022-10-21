@@ -1,3 +1,4 @@
+using App.Models;
 using App.Services.NuGet;
 
 namespace App.Services.Console;
@@ -9,4 +10,5 @@ public interface IConsoleService
     void RenderNugetPackages(ICollection<NuGetPackage> nugetPackages, NuGetParameters parameters);
     void RenderSettingsFile(string filepath);
     void RenderException(Exception exception);
+    void RenderValidationErrors(ValidationErrors validationErrors);
 }

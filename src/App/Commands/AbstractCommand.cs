@@ -1,4 +1,4 @@
-﻿using App.Services;
+﻿using App.Models;
 using App.Services.Console;
 using McMaster.Extensions.CommandLineUtils;
 
@@ -8,38 +8,36 @@ public abstract class AbstractCommand
 {
     protected IConsoleService ConsoleService;
 
-    protected string CommandName => GetType().Name;
-
     protected AbstractCommand(IConsoleService consoleService)
     {
         ConsoleService = consoleService ?? throw new ArgumentNullException(nameof(consoleService));
     }
 
-    public async Task OnExecuteAsync(CommandLineApplication app, CancellationToken cancellationToken = default)
+    public async Task<int> OnExecuteAsync(CommandLineApplication app, CancellationToken cancellationToken = default)
     {
         try
         {
-            if (!HasValidOptions())
+            if (!HasValidOptionsAndArguments(out var validationErrors))
             {
-                throw new Exception($"Invalid options for command {CommandName}");
-            }
-
-            if (!HasValidArguments())
-            {
-                throw new Exception($"Invalid arguments for command {CommandName}");
+                ConsoleService.RenderValidationErrors(validationErrors);
+                return ExitCode.Ko;
             }
 
             await ExecuteAsync(app, cancellationToken);
+            return ExitCode.Ok;
         }
         catch (Exception ex)
         {
             ConsoleService.RenderException(ex);
+            return ExitCode.Ko;
         }
     }
 
     protected abstract Task ExecuteAsync(CommandLineApplication app, CancellationToken cancellationToken = default);
 
-    protected virtual bool HasValidOptions() => true;
-
-    protected virtual bool HasValidArguments() => true;
+    protected virtual bool HasValidOptionsAndArguments(out ValidationErrors validationErrors)
+    {
+        validationErrors = new ValidationErrors();
+        return true;
+    }
 }
