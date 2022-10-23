@@ -10,7 +10,7 @@ public class UploadCommand : AbstractCommand
 {
     private readonly INuGetService _nuGetService;
 
-    public UploadCommand(IConsoleService consoleService, INuGetService nuGetService) : base(consoleService)
+    public UploadCommand(INuGetService nuGetService, IConsoleService consoleService) : base(consoleService)
     {
         _nuGetService = nuGetService ?? throw new ArgumentNullException(nameof(nuGetService));
     }
@@ -39,22 +39,5 @@ public class UploadCommand : AbstractCommand
             var nugetPackages = await _nuGetService.UploadNugetPackagesAsync(parameters, cancellationToken);
             ConsoleService.RenderNugetPackages(nugetPackages, parameters);
         });
-    }
-
-    protected override bool HasValidOptionsAndArguments(out ValidationErrors validationErrors)
-    {
-        validationErrors = new ValidationErrors();
-
-        if (string.IsNullOrWhiteSpace(NugetFeedUrl))
-        {
-            validationErrors.Add("-u|--url", "Feed url is mandatory");
-        }
-
-        if (!Directory.Exists(WorkingDirectory))
-        {
-            validationErrors.Add("-d|--dir", $"Directory '{WorkingDirectory}' does not exist");
-        }
-
-        return !validationErrors.Any();
     }
 }

@@ -70,18 +70,20 @@ public class ConsoleService : IConsoleService
     {
         var count = validationErrors.Count;
 
+        var commandType = validationErrors.CommandType;
+
         var table = new Table()
             .BorderColor(Color.White)
             .Border(TableBorder.Square)
             .Title($"[red][bold]{count} error(s)[/][/]")
-            .AddColumn(new TableColumn("[u]Option[/]").Centered())
-            .AddColumn(new TableColumn("[u]Reason[/]").Centered())
+            .AddColumn(new TableColumn("[u]Name[/]").Centered())
+            .AddColumn(new TableColumn("[u]Message[/]").Centered())
             .Caption("[grey][bold]Invalid options/arguments[/][/]");
 
         foreach (var error in validationErrors)
         {
-            var name = $"[bold]{error.Name}[/]";
-            var reason = $"[tan]{error.Reason}[/]";
+            var name = $"[bold]{error.OptionName(commandType)}[/]";
+            var reason = $"[tan]{error.ErrorMessage}[/]";
 
             table.AddRow(name.ToMarkup(), reason.ToMarkup());
         }

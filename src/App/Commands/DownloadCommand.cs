@@ -10,7 +10,7 @@ public class DownloadCommand : AbstractCommand
 {
     private readonly INuGetService _nuGetService;
 
-    public DownloadCommand(IConsoleService consoleService, INuGetService nuGetService) : base(consoleService)
+    public DownloadCommand(INuGetService nuGetService, IConsoleService consoleService) : base(consoleService)
     {
         _nuGetService = nuGetService ?? throw new ArgumentNullException(nameof(nuGetService));
     }
@@ -47,42 +47,5 @@ public class DownloadCommand : AbstractCommand
             var nugetPackages = await _nuGetService.DownloadNugetPackagesAsync(parameters, cancellationToken);
             ConsoleService.RenderNugetPackages(nugetPackages, parameters);
         });
-    }
-
-    protected override bool HasValidOptionsAndArguments(out ValidationErrors validationErrors)
-    {
-        validationErrors = new ValidationErrors();
-
-        if (string.IsNullOrWhiteSpace(NugetFeedUrl))
-        {
-            validationErrors.Add("-u|--url", "Feed url is mandatory");
-        }
-
-        if (!Directory.Exists(WorkingDirectory))
-        {
-            validationErrors.Add("-d|--dir", $"Directory '{WorkingDirectory}' does not exist");
-        }
-
-        if (!string.IsNullOrWhiteSpace(PackagesFile))
-        {
-            if (!File.Exists(PackagesFile))
-            {
-                validationErrors.Add("-f|--file", $"File '{PackagesFile}' does not exist");
-            }
-        }
-        else
-        {
-            if (string.IsNullOrWhiteSpace(PackageName))
-            {
-                validationErrors.Add("-n|--name", "Package name is mandatory");
-            }
-
-            if (string.IsNullOrWhiteSpace(PackageVersion))
-            {
-                validationErrors.Add("-v|--version", "Package version is mandatory");
-            }
-        }
-
-        return !validationErrors.Any();
     }
 }

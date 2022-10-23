@@ -1,4 +1,5 @@
-﻿using App.Models;
+﻿using App.Extensions;
+using App.Models;
 using App.Services.Console;
 using McMaster.Extensions.CommandLineUtils;
 
@@ -37,7 +38,7 @@ public abstract class AbstractCommand
 
     protected virtual bool HasValidOptionsAndArguments(out ValidationErrors validationErrors)
     {
-        validationErrors = new ValidationErrors();
-        return true;
+        validationErrors = this.Validate();
+        return !validationErrors.Any();
     }
 }

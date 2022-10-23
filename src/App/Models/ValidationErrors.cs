@@ -1,9 +1,16 @@
-﻿namespace App.Models;
+﻿using FluentValidation.Results;
 
-public class ValidationErrors : List<ValidationError>
+namespace App.Models;
+
+public class ValidationErrors : List<ValidationFailure>
 {
-    public void Add(string name, string error)
+    public Type CommandType { get; set; }
+
+    public ValidationErrors()
     {
-        Add(new ValidationError(name, error));
+    }
+
+    public ValidationErrors(IEnumerable<ValidationFailure> failures) : base(failures)
+    {
     }
 }
