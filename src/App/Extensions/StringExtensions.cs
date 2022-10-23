@@ -18,4 +18,10 @@ public static class StringExtensions
         if (input is null || key is null) return input == key;
         return input.StartsWith(key, StringComparison.OrdinalIgnoreCase);
     }
+
+    public static bool IgnoreCaseEndsWith(this string input, string key)
+    {
+        if (input is null || key is null) return input == key;
+        return input.EndsWith(key, StringComparison.OrdinalIgnoreCase);
+    }
 }
