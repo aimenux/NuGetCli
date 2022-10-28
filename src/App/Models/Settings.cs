@@ -4,7 +4,7 @@ public class Settings
 {
     public const string PackageId = @"NuGetCli";
 
-    public const string CommandName = @"nuget-cli";
+    public const string CommandName = @"NuGetCli";
 
     public const string DefaultNugetFeedUrl = "https://api.nuget.org/v3/index.json";
 

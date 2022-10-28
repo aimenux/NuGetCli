@@ -13,6 +13,7 @@ namespace App.Extensions
         {
             return command switch
             {
+                MainCommand _ => new ValidationErrors { CommandType = typeof(MainCommand) },
                 UploadCommand uploadCommand => Validate(new UploadCommandValidator(), uploadCommand),
                 DownloadCommand downloadCommand => Validate(new DownloadCommandValidator(), downloadCommand),
                 _ => throw new ArgumentOutOfRangeException(nameof(command), typeof(T), "Unexpected command type")
