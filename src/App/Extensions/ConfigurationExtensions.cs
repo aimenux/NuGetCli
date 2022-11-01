@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Serilog.Events;
 using static App.Extensions.PathExtensions;
 
 namespace App.Extensions;
@@ -17,15 +16,5 @@ public static class ConfigurationExtensions
     public static void AddUserSecrets(this IConfigurationBuilder configurationBuilder)
     {
         configurationBuilder.AddUserSecrets(typeof(Program).Assembly);
-    }
-
-    public static LogEventLevel GetDefaultLogLevel(this IConfiguration configuration)
-    {
-        return configuration.GetValue<LogEventLevel>("Serilog:MinimumLevel:Default");
-    }
-
-    public static string GetOutputTemplate(this IConfiguration configuration)
-    {
-        return configuration["Serilog:WriteTo:0:Args:outputTemplate"];
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace App.Models;
+﻿namespace App;
 
 public class Settings
 {
@@ -12,5 +12,11 @@ public class Settings
     {
         const string workDir = @"C:\Logs";
         return Directory.Exists(workDir) ? workDir : @"./";
+    }
+
+    public static class ExitCode
+    {
+        public const int Ok = 0;
+        public const int Ko = -1;
     }
 }

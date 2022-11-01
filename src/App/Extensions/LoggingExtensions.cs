@@ -1,4 +1,4 @@
-﻿using App.Models;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -35,10 +35,15 @@ public static class LoggingExtensions
             }
             else
             {
-                var outputTemplate = hostingContext.Configuration.GetOutputTemplate();
+                var outputTemplate = GetOutputTemplate(hostingContext.Configuration);
                 loggerConfiguration
                     .WriteTo.Console(outputTemplate: outputTemplate);
             }
         });
+    }
+
+    private static string GetOutputTemplate(IConfiguration configuration)
+    {
+        return configuration["Serilog:WriteTo:0:Args:outputTemplate"];
     }
 }

@@ -1,6 +1,5 @@
 ﻿using App.Commands;
 using App.Extensions;
-using App.Models;
 using App.Services.Console;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +19,7 @@ public static class Program
         catch (Exception ex)
         {
             ConsoleService.RenderAnyException(ex);
-            return ExitCode.Ko;
+            return Settings.ExitCode.Ko;
         }
     }
 
@@ -33,11 +32,10 @@ public static class Program
                 config.AddEnvironmentVariables();
                 config.AddCommandLine(args);
             })
-            .ConfigureLogging((hostingContext, loggingBuilder) =>
+            .ConfigureLogging((_, loggingBuilder) =>
             {
                 loggingBuilder.ClearProviders();
                 loggingBuilder.AddDefaultLogger();
-                loggingBuilder.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
             })
             .ConfigureServices((hostingContext, services) =>
             {

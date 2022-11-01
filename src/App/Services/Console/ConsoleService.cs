@@ -1,9 +1,8 @@
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using App.Extensions;
-using App.Models;
 using App.Services.NuGet;
+using App.Validators;
 using Spectre.Console;
 
 namespace App.Services.Console;
@@ -34,19 +33,6 @@ public class ConsoleService : IConsoleService
             });
     }
 
-    public void RenderNugetPackages(ICollection<NuGetPackage> nugetPackages, NuGetParameters parameters)
-    {
-        switch (parameters.Mode)
-        {
-            case NuGetParametersMode.Upload:
-                RenderNugetPackagesForUpload(nugetPackages);
-                break;
-            case NuGetParametersMode.Download:
-                RenderNugetPackagesForDownload(nugetPackages);
-                break;
-        }
-    }
-
     public void RenderSettingsFile(string filepath)
     {
         var name = Path.GetFileName(filepath);
@@ -66,33 +52,6 @@ public class ConsoleService : IConsoleService
 
     public void RenderException(Exception exception) => RenderAnyException(exception);
 
-    public void RenderValidationErrors(ValidationErrors validationErrors)
-    {
-        var count = validationErrors.Count;
-
-        var commandType = validationErrors.CommandType;
-
-        var table = new Table()
-            .BorderColor(Color.White)
-            .Border(TableBorder.Square)
-            .Title($"[red][bold]{count} error(s)[/][/]")
-            .AddColumn(new TableColumn("[u]Name[/]").Centered())
-            .AddColumn(new TableColumn("[u]Message[/]").Centered())
-            .Caption("[grey][bold]Invalid options/arguments[/][/]");
-
-        foreach (var error in validationErrors)
-        {
-            var name = $"[bold]{error.OptionName(commandType)}[/]";
-            var reason = $"[tan]{error.ErrorMessage}[/]";
-
-            table.AddRow(name.ToMarkup(), reason.ToMarkup());
-        }
-
-        AnsiConsole.WriteLine();
-        AnsiConsole.Write(table);
-        AnsiConsole.WriteLine();
-    }
-
     public static void RenderAnyException<T>(T exception) where T : Exception
     {
         const ExceptionFormats formats = ExceptionFormats.ShortenTypes
@@ -104,6 +63,44 @@ public class ConsoleService : IConsoleService
         AnsiConsole.WriteLine();
     }
 
+    public void RenderValidationErrors(ValidationErrors validationErrors)
+    {
+        var count = validationErrors.Count;
+
+        var table = new Table()
+            .BorderColor(Color.White)
+            .Border(TableBorder.Square)
+            .Title($"[red][bold]{count} error(s)[/][/]")
+            .AddColumn(new TableColumn("[u]Name[/]").Centered())
+            .AddColumn(new TableColumn("[u]Message[/]").Centered())
+            .Caption("[grey][bold]Invalid options/arguments[/][/]");
+
+        foreach (var error in validationErrors)
+        {
+            var failure = error.Failure;
+            var name = $"[bold]{error.OptionName()}[/]";
+            var reason = $"[tan]{failure.ErrorMessage}[/]";
+            table.AddRow(ToMarkup(name), ToMarkup(reason));
+        }
+
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(table);
+        AnsiConsole.WriteLine();
+    }
+
+    public void RenderNugetPackages(ICollection<NuGetPackage> nugetPackages, NuGetParameters parameters)
+    {
+        switch (parameters.Mode)
+        {
+            case NuGetParametersMode.Upload:
+                RenderNugetPackagesForUpload(nugetPackages);
+                break;
+            case NuGetParametersMode.Download:
+                RenderNugetPackagesForDownload(nugetPackages);
+                break;
+        }
+    }
+
     private static void RenderNugetPackagesForUpload(ICollection<NuGetPackage> nugetPackages)
     {
         var anyFailure = nugetPackages.Any(x => x is FailedNuGetPackage);
@@ -112,8 +109,8 @@ public class ConsoleService : IConsoleService
             .BorderColor(Color.White)
             .Border(TableBorder.Square)
             .Title($"[yellow]{nugetPackages.Count} package(s)[/]")
-            .AddColumn(new TableColumn($"[u]Name[/]").LeftAligned())
-            .AddColumn(new TableColumn($"[u]Status[/]").WithStyle(anyFailure));
+            .AddColumn(new TableColumn("[u]Name[/]").LeftAligned())
+            .AddColumn(WithStyle(new TableColumn("[u]Status[/]"), anyFailure));
 
         foreach (var nugetPackage in nugetPackages)
         {
@@ -122,7 +119,7 @@ public class ConsoleService : IConsoleService
                 ? $"{Emoji.Known.CrossMark} [grey][bold]{failedNuGetPackage.Reason}[/][/]"
                 : Emoji.Known.CheckMarkButton;
 
-            table.AddRow(name.ToMarkup(), status.ToMarkup());
+            table.AddRow(ToMarkup(name), ToMarkup(status));
         }
 
         AnsiConsole.WriteLine();
@@ -138,9 +135,9 @@ public class ConsoleService : IConsoleService
             .BorderColor(Color.White)
             .Border(TableBorder.Square)
             .Title($"[yellow]{nugetPackages.Count} package(s)[/]")
-            .AddColumn(new TableColumn($"[u]Name[/]").LeftAligned())
-            .AddColumn(new TableColumn($"[u]Version[/]").WithStyle(anyFailure))
-            .AddColumn(new TableColumn($"[u]Status[/]").WithStyle(anyFailure));
+            .AddColumn(new TableColumn("[u]Name[/]").LeftAligned())
+            .AddColumn(WithStyle(new TableColumn("[u]Version[/]"), anyFailure))
+            .AddColumn(WithStyle(new TableColumn("[u]Status[/]"), anyFailure));
 
         foreach (var nugetPackage in nugetPackages)
         {
@@ -150,7 +147,7 @@ public class ConsoleService : IConsoleService
                 ? $"{Emoji.Known.CrossMark} [grey][bold]{failedNuGetPackage.Reason}[/][/]"
                 : Emoji.Known.CheckMarkButton;
 
-            table.AddRow(name.ToMarkup(), version.ToMarkup(), status.ToMarkup());
+            table.AddRow(ToMarkup(name), ToMarkup(version), ToMarkup(status));
         }
 
         AnsiConsole.WriteLine();
@@ -177,4 +174,23 @@ public class ConsoleService : IConsoleService
         var value = (Spinner)values.GetValue(index);
         return value;
     }
+
+    private static T WithStyle<T>(T obj, bool anyFailure) where T : class, IAlignable
+    {
+        return anyFailure ? obj.LeftAligned() : obj.Centered();
+    }
+
+    private static Markup ToMarkup(string text)
+    {
+        try
+        {
+            return new Markup(text ?? string.Empty);
+        }
+        catch
+        {
+            return ErrorMarkup;
+        }
+    }
+
+    private static readonly Markup ErrorMarkup = new(Emoji.Known.CrossMark);
 }

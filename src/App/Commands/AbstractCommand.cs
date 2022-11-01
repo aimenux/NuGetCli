@@ -1,6 +1,5 @@
-﻿using App.Extensions;
-using App.Models;
-using App.Services.Console;
+﻿using App.Services.Console;
+using App.Validators;
 using McMaster.Extensions.CommandLineUtils;
 
 namespace App.Commands;
@@ -21,16 +20,16 @@ public abstract class AbstractCommand
             if (!HasValidOptionsAndArguments(out var validationErrors))
             {
                 ConsoleService.RenderValidationErrors(validationErrors);
-                return ExitCode.Ko;
+                return Settings.ExitCode.Ko;
             }
 
             await ExecuteAsync(app, cancellationToken);
-            return ExitCode.Ok;
+            return Settings.ExitCode.Ok;
         }
         catch (Exception ex)
         {
             ConsoleService.RenderException(ex);
-            return ExitCode.Ko;
+            return Settings.ExitCode.Ko;
         }
     }
 
@@ -38,7 +37,7 @@ public abstract class AbstractCommand
 
     protected virtual bool HasValidOptionsAndArguments(out ValidationErrors validationErrors)
     {
-        validationErrors = this.Validate();
+        validationErrors = CommandValidator.Validate(this);
         return !validationErrors.Any();
     }
 }

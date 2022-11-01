@@ -1,5 +1,4 @@
-﻿using App.Models;
-using App.Services.Console;
+﻿using App.Services.Console;
 using App.Services.NuGet;
 using McMaster.Extensions.CommandLineUtils;
 
