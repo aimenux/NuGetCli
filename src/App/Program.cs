@@ -1,6 +1,7 @@
 ﻿using App.Commands;
 using App.Extensions;
 using App.Services.Console;
+using App.Services.NuGet;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -39,15 +40,11 @@ public static class Program
             })
             .ConfigureServices((hostingContext, services) =>
             {
-                services.Scan(scan =>
-                {
-                    scan.FromCallingAssembly()
-                        .FromAssemblies(typeof(Program).Assembly)
-                        .AddClasses()
-                        .AsImplementedInterfaces()
-                        .WithScopedLifetime();
-                });
-
+                services.AddTransient<MainCommand>();
+                services.AddTransient<UploadCommand>();
+                services.AddTransient<DownloadCommand>();
+                services.AddTransient<INuGetService, NuGetService>();
+                services.AddTransient<IConsoleService, ConsoleService>();
                 services.Configure<Settings>(hostingContext.Configuration.GetSection(nameof(Settings)));
             })
             .AddSerilog();
