@@ -7,7 +7,7 @@ Providing a net global tool to upload/download nuget packages
 
 > In this repo, i m building a global tool that allows to upload/download nuget packages.
 >
-> The tool is based on multiple sub commmands :
+> The tool is based on multiple sub commands :
 > - Use sub command `Upload` to upload nuget packages
 > - Use sub command `Download` to download nuget packages
 
@@ -36,4 +36,4 @@ Providing a net global tool to upload/download nuget packages
 >
 >
 
-**`Tools`** : vs22, net 6.0, command-line, spectre-console
+**`Tools`** : vs22, net 6.0/7.0/8.0, command-line, spectre-console
