@@ -1,4 +1,5 @@
 [![.NET](https://github.com/aimenux/NuGetCli/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aimenux/NuGetCli/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/NuGetCli)](https://www.nuget.org/packages/NuGetCli/)
 
 # NuGetCli
 ```
